@@ -4,7 +4,7 @@ import tkinter.ttk as ttk
 from controllers import *
 
 
-def button(master, title, command, fg='black', side=LEFT, pad=5, w=15):
+def button(master, title, command, fg='black', side=LEFT, pad=5, w=10, **kw):
     """ https://younglinux.info/tkinter/widget.php
 
     :param master:
@@ -14,18 +14,18 @@ def button(master, title, command, fg='black', side=LEFT, pad=5, w=15):
     :param side:
     :param pad:
     :param w:
+    :param kw:
     :return:
     """
     w = max(len(title), w)
-    b = Button(master, text=title, command=command, width=w)
-    b.config(bg='lightgray', activebackground='#888', activeforeground=fg)
+    d = {'text': title, 'command': command, 'width': w, 'bg': 'lightgray', 'activebackground': '#888', 'activeforeground': fg}
+    b = Button(master, **d)
     b.pack(padx=pad, pady=pad, side=side)
     return b
 
 
 def grid(w: Widget, row, col, colspan=1, rowspan=1, pad=5, **kw):
-    d = {'row': row, 'column': col, 'columnspan': colspan, 'rowspan': rowspan, 'padx': pad, 'pady': pad,
-         'sticky': 'ensw'}
+    d = {'row': row, 'column': col, 'columnspan': colspan, 'rowspan': rowspan, 'padx': pad, 'pady': pad, 'sticky': 'ensw'}
     w.grid(**{**d, **kw})
     return w
 
@@ -66,8 +66,8 @@ class TVItem:
 
     @staticmethod
     def from_task(v: Task):
-        r = TVItem(v, None, lambda i: i.title, lambda i: (i.date, i.ву, i.tiьe))
-        r.childs = (TVItem.from_taskItem(i, lambda i: i.title, lambda i: (i.date, i.solution, i.tiьe)) for i in v.items)
+        r = TVItem(v, None, lambda i: i.title, lambda i: (i.date, i.description, i.time))
+        r.childs = (TVItem.from_taskItem(i, lambda i: i.title, lambda i: (i.date, i.solution, i.time)) for i in v.items)
         return r
 
 
@@ -147,11 +147,9 @@ class TVHelper:
         tv['columns'] = names
         tv[
             'displaycolumns'] = displaycolumns  # Список идентификаторов столбцов (символьных или целочисленных индексов), определяющих, какие столбцы данных отображаются и в каком порядке они отображаются, или строку «#all»
-        tv[
-            'height'] = height  # Определяет количество строк, которые должны быть видны. Примечание: запрашиваемая ширина определяется из суммы значений ширины столбца.
+        tv['height'] = height  # Определяет количество строк, которые должны быть видны. Примечание: запрашиваемая ширина определяется из суммы значений ширины столбца.
         # tv['padding'] =  # Определяет внутренний отступ для виджета. Заполнение представляет собой список до четырех спецификаций длины
-        tv[
-            'selectmode'] = selectmode  # Управляет тем, как встроенные привязки классов управляют выбором. One of “extended”, “browse” or “none”. If set to “extended” (по умолчанию), можно выбрать несколько элементов. If “browse”, только один элемент будет выбран за один раз. If “none”, the selection will not be changed
+        tv['selectmode'] = selectmode  # Управляет тем, как встроенные привязки классов управляют выбором. One of “extended”, “browse” or “none”. If set to “extended” (по умолчанию), можно выбрать несколько элементов. If “browse”, только один элемент будет выбран за один раз. If “none”, the selection will not be changed
         # tv['show'] = # Чтобы подавить метки в верхней части каждого столбца, укажите show = 'tree'. По умолчанию показываются метки столбцов.
 
         tv.bind('<<TreeviewSelect>>', self.act_select)
@@ -193,7 +191,6 @@ class TVHelper:
 
     def act_select(self, *e):
         ii = self.tv.selection()
-        print(e)
         if self.cmd_on_select_item and ii:
             i = self.find_item(ii[0])
             self.cmd_on_select_item(i)
@@ -234,9 +231,7 @@ class WDialogBase(Toplevel):
     def __init__(self, master):
         super(WDialogBase, self).__init__(master)
 
-        self._list_controls = [
-            WButtoms(self, self._act_ok, self._act_cancel)
-        ]
+        self._list_controls = [WButtoms(self, self._act_ok, self._act_cancel)]
         self._init_controls()
 
     def _init_controls(self): pass
@@ -261,7 +256,6 @@ class WOption(WDialogBase):
         self._init_data()
 
     def _init_(self):
-        # TODO: виджеты не растягиваются за окном ((
         self.items_data = [StringVar(self), ]
         # WButtoms(self, self.act_ok)
         f = Frame(self)
@@ -274,25 +268,24 @@ class WOption(WDialogBase):
         ttk.Entry(f2, textvariable=self.items_data[0]).pack(expand=True, fill=BOTH, side=LEFT)
         r += 1
         grid(Label(f, text='Источники:'), r, 0)
-        self.sources = grid(Text(f, height=5, width=40), r, 1)
+        self.sources: Text = grid(Text(f, height=5, width=40), r, 1)
         r += 1
 
     def _init_data(self):
-        v = db.options
+        v = optionController.get()
         self.items_data[0].set(v.db_path)
         sources = '\n'.join(v.sources)
         self.sources.insert(1.0, sources)
 
     def _act_ok(self):
-        db.options.db_path = self.items_data[0].get()
+        v = optionController.get()
+        v.db_path = self.items_data[0].get()
         s = self.sources.get(1.0, END).rstrip('\n')
-        db.options.sources = s.split('\n')
-        return Db.save_options()
+        v.sources = s.split('\n')
+        return optionController.save()
 
     def act_open_file(self):
-        f_name = fd.askopenfilename(parent=self, filetypes=(
-            ("JSON files", "*.json"), ("DB files", "*.db;*.sqlite3"), ("All files", "*.*"))
-                                    )
+        f_name = fd.askopenfilename(parent=self, filetypes=(("JSON files", "*.json"), ("DB files", "*.db;*.sqlite3"), ("All files", "*.*")))
         if f_name:
             self.items_data[0].set(f_name)
 
@@ -327,6 +320,7 @@ class WTask(WDialogBase):
         grid(ttk.Entry(f, textvariable=self.items_task[1]), r, 1)
         r += 1
         grid(Label(f, text='Источник:'), r, 0)
+        # TODO: Combobox стрвнно растягивается - за окно ((
         grid(ttk.Combobox(f, values=db.options.sources, textvariable=self.items_task[2]), r, 1, padx=5, pady=5)
         r += 1
         grid(Label(f, text='Решения:'), r, 0)
@@ -350,7 +344,7 @@ class WTask(WDialogBase):
         f_bar = grid(Frame(f), r, 1)
         button(f_bar, 'Refresh', lambda: self.act_select_item(self.items_task_tvh.selected), w=5)
         button(f_bar, 'Add', self.act_add_item, w=5)
-        button(f_bar, 'Save', self.act_save_item, pad=0, w=5)
+        button(f_bar, 'Save', self.act_save_item, w=5)
         r += 1
         grid(Label(f, text='Дата:'), r, 0)
         grid(ttk.Entry(f, textvariable=self.items_taskItem[0]), r, 1)
