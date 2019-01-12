@@ -2,11 +2,10 @@
 # -*- coding: utf-8 -*-
 
 # from sys import argv
-from tkinter import *
+from tk_helpers import *
 import tkinter.ttk as ttk
 import models
 from ui import *
-
 
 
 class Main(Tk):
@@ -24,16 +23,22 @@ class Main(Tk):
         self.tvh: TVHelper = None
         self._init_menu()
         self.init_tree()
+        self.init_data()
 
     def _init_menu(self):
         m = Menu()
+        self.config(menu=m)
+
         m.add_command(label='Настройки', command=self.act_options)
+        m.add_separator()
 
         m_task = Menu(m, tearoff=0)
         m_task.add_command(label='Создать', command=self.act_task_new)
+        m_task.add_command(label='Изменить', command=self.act_task_edit)
         m.add_cascade(label='Задача', menu=m_task)
+        m.add_separator()
 
-        self.config(menu=m)
+        m.add_checkbutton(label='Start', command=self.timer)
 
     def init_tree(self):
         """ https://docs.python.org/3/library/tkinter.ttk.html https://knowpapa.com/ttk-treeview/
@@ -48,11 +53,10 @@ class Main(Tk):
         tvh.add_col(_columns[3], 'Время', None, 60)
         tvh.init_tv()
 
-        self.init_data()
-
     def init_data(self):
+        self.tvh.clear()
         data = taskController.get_list()
-        tvi = (TVItem.from_taskItem(d) for d in data)
+        tvi = list(from_task(d) for d in data)
         self.tvh.fill_tv(tvi)
 
     def run(self):
@@ -61,9 +65,25 @@ class Main(Tk):
 
         self.mainloop()
 
-    def act_options(self, *e):
-        WOption.show(self)
+    def act_options(self):
+        Dialog_Option.show(self)
 
     def act_task_new(self):
-        t = WTask.show(self, Task())
+        self.act_task(self, Task())
 
+    def act_task_edit(self):
+        t = self.tvh.selected
+        while t and isinstance(t.item, TaskItem):
+            t = t.parent
+        if t:
+            self.act_task(t.item)
+        else:
+            self.bell()
+
+    def act_task(self, t: Task):
+        t = Dialog_Task.show(self, t)
+        if t:
+            self.init_data()
+
+    def timer(self):
+        self.tvh.lock(True)

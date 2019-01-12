@@ -6,12 +6,11 @@ def date_fromisoformat(ISOstr: str):
     return datetime.date(int(ss[0]), int(ss[1]), int(ss[2]))
 
 
-# class JsonAbstract:
 def to_dict(o):
     res = {}
     for k in o:
         v = o[k]
-        t = type(v)
+        # t = type(v)
         # if t.
         res[k] = v
     return res
@@ -57,10 +56,10 @@ class Task:
 
     def calc_time(self):
         r: datetime.timedelta = datetime.timedelta(0)
-        for i in self.items:
-            r += i.time
-        return r
-        return sum(i.time for i in self.items)
+        # for i in self.items:
+        #     r += i.time
+        # return r
+        return sum((i.time for i in self.items), r)
 
     def to_dict(self):
         """ https://python-scripts.com/json """
