@@ -38,8 +38,8 @@ def from_taskItem(v: TaskItem, getText=None, getValues=None):
 
 
 def from_task(v: Task):
-    r = tkh.TreeViewItem(v, None, lambda i: i.title, lambda i: (i.date, i.description, i.time))
-    r.childItems = list(from_taskItem(i, lambda i: i.title, lambda i: (i.date, i.solution, i.time)) for i in v.items)
+    r = tkh.TreeViewItem(v, None, lambda i: i.title, lambda i: (i.date, i.description, i.title))
+    r.childItems = tuple(from_taskItem(i, lambda i: i.title, lambda i: (i.date, i.solution, i.time)) for i in v.items)
     return r
 
 
@@ -203,7 +203,8 @@ class Dialog_Task(sd.Dialog):
             self.act_save_item()
             if not v.id:
                 taskController.insert(v)
-            taskController.save()
+            else:
+                taskController.update(v)
             __class__.modal_result = v
         return v
 

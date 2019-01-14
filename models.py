@@ -33,26 +33,22 @@ class Optiopns:
         return {'db_path': self.db_path, "sources": self.sources}
 
 
-class Task:
-    __slots__ = ('id', 'date', 'title', 'source', 'description', 'items', 'time')
+class _model(object):
+    id: int = None
 
-    def __init__(self, json: dict = None):
-        if json:
-            self.id = int(json.get('id'))
-            self.date = date_fromisoformat(json.get('date'))
-            self.title = json.get('title') or ''
-            self.source = json.get('source') or ''
-            self.description = json.get('description') or ''
-            self.items = [TaskItem(self, i) for i in list(json.get('items') or ())]
-            self.time = self.calc_time()
-        else:
-            self.id = 0
-            self.date = datetime.date.today()
-            self.title = ''
-            self.source = ''
-            self.description = ''
-            self.items = [TaskItem(self)]
-            self.time = datetime.timedelta(0)
+
+class Task(_model):
+    #__slots__ = ('id', 'date', 'title', 'source', 'description', 'items', 'time')
+    #__slots__ = ('date', 'title', 'source', 'description', 'items', 'time')
+
+    def __init__(self):
+        self.date = datetime.date.today()
+        self.title = ''
+        self.source = ''
+        self.description = ''
+
+        self.items = [TaskItem(self)]
+        self.time = datetime.timedelta(0)
 
     def calc_time(self):
         r: datetime.timedelta = datetime.timedelta(0)
@@ -61,39 +57,33 @@ class Task:
         # return r
         return sum((i.time for i in self.items), r)
 
-    def to_dict(self):
-        """ https://python-scripts.com/json """
-        return {
-            'id': self.id,
-            'date': self.date.isoformat(),
-            'title': self.title,
-            'source': self.source,
-            'description': self.description,
-            'items': list(i.to_dict() for i in self.items),
-            # 'time': self.time.
-        }
+    def __repr__(self):
+        return "<%s(%i, %s, '%s')>" % (self.__class__.__name__, self.id or 0, self.date, self.title)
 
 
-class TaskItem:
-    __slots__ = ('id', 'parentId', 'date', 'title', 'solution', 'time')
+class TaskItem(_model):
+    #__slots__ = ('id', 'parentId', 'date', 'title', 'solution', 'time')
+    _time: datetime.timedelta
 
-    def __init__(self, parent: Task, json: dict = None):
-        if json:
-            self.date = date_fromisoformat(json.get('date'))
-            self.title = json.get('title', '')
-            self.solution = json.get('solution', '')
-            self.time = datetime.timedelta(0, int(json.get('time', '0')))
-        else:
-            self.date = datetime.date.today()
-            self.title = ''
-            self.solution = ''
-            self.time = datetime.timedelta(0)
+    def __init__(self, parent: Task):
+        self.date = datetime.date.today()
+        self.title = ''
+        self.solution = ''
+        self.time_seconds = 0
+        #self.time = datetime.timedelta(0)
 
-        self.parentId = parent.id
-        self.id = None
+        self.task_id = parent.id
+        self.task = parent
 
     def __str__(self):
         return '{0} {1}'.format(self.solution, self.time)
 
-    def to_dict(self):
-        return {'date': self.date.isoformat(), 'title': self.title, 'solution': self.solution, 'time': self.time.total_seconds()}
+    @property
+    def time(self) -> datetime.timedelta:
+        self._time = datetime.timedelta(0, self.time_seconds or 0)
+        return self._time
+    
+    @time.setter
+    def time(self, value: datetime.timedelta):
+        self._time = value
+        self.time_seconds = value and value.total_seconds() or 0
