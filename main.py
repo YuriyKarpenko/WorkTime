@@ -62,7 +62,7 @@ class Main(Tk):
 		self.tvh.clear()
 		data = taskController.get_list()
 		tvi = list(from_task(d) for d in data)
-		self.tvh.fill_tv(tvi)
+		self.tvh.items_set(tvi)
 
 	def run(self):
 		s = ttk.Style()

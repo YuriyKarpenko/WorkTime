@@ -195,7 +195,7 @@ class Dialog_Task(sd.Dialog):
 			self.items_task[2].set(v.source)
 			self.items_task[3].set(v.description)
 			tvi = list(from_taskItem(i) for i in v.items)
-			self.items_task_tvh.fill_tv(tvi)
+			self.items_task_tvh.items_set(tvi)
 
 	def validate(self):
 		""" фиксация изменений"""
@@ -221,12 +221,15 @@ class Dialog_Task(sd.Dialog):
 
 	def act_add_item(self):
 		""" добавление решения в задачу """
-		v = TaskItem(self.task)
-		self.task.items.append(v)
-		tvi = from_taskItem(v)
+		v = TaskItem(self.task) # создать щиъект
+		tvi = from_taskItem(v) # обвернуть его
+
+		self.task.items.append(v) # добавить в данные
+		self.items_task_tvh.items_add(tvi, True) # добавить в UI
+
 		# TODO: надо выделять новую запись в списке
-		tvi.insert(self.items_task_tvh.tv)
-		self.act_select_item(tvi)
+		# self.items_task_tvh.select(tvi.iid)
+		# self.act_select_item(tvi)
 
 	def act_save_item(self):
 		""" заполнение данных решения из полей формы"""

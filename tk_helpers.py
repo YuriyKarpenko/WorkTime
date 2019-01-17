@@ -3,14 +3,14 @@ from tkinter.ttk import Treeview
 
 
 class TreeViewItem:
-	def __init__(self, item, image, getText, getValues, childIs: list = None):
+	def __init__(self, item, image, getText, getValues, childs: list = None):
 		""" инкапсулирует методы для работы с элементами Treeview
 
 		:param item: экземпляр ползовательсих данныз
 		:param image: картинка узла
 		:param getText: метод получения текста узла из пользовательских данных
 		:param getValues: метод получения текста для колонок узла из пользовательских данных
-		:param childIs: дочерние элементы узла
+		:param childs: дочерние элементы узла
 		"""
 		self.item = item
 		self.iid = ''
@@ -22,7 +22,7 @@ class TreeViewItem:
 		self._getValues = getValues
 
 		self.parent: TreeViewItem = None
-		self.childItems = childIs
+		self.childItems = childs
 
 	@property
 	def text(self):
@@ -34,24 +34,20 @@ class TreeViewItem:
 		a = self._getValues
 		return a and a(self.item)
 
-	def find(self, iid: str):  # -> TreeViewItem:
-		if iid == self.iid:
-			return self
-		if self.childItems:
-			return next((i for i in self.childItems if i.iid == iid), None)
-		return None
-
-	def insert(self, tv: Treeview, parent: str = ''):
+	def insert_self(self, tv: Treeview, parent: str = ''):
+		""" добавляет себя в новый узел Treeview + заполняет вои iid"""
 		self.tv = tv
 		self.iid = tv.insert(parent, END, tags=self.tags or (), text=self.text, values=self.values)
 		if self.childItems:
 			for c in self.childItems:
 				c.parent = self
-				c.insert(tv, self.iid)
+				c.insert_self(tv, self.iid)
 		return self
 
 	def update(self):
 		self.tv.item(self.iid, text=self.text, values=self.values)
+
+	def __repr__(self): return '%s: [%i], %s' % (self.iid, len(self.childItems) if self.childItems else 0, str(self.item) )
 
 
 class TVHelper:
@@ -59,18 +55,18 @@ class TVHelper:
 	"""
 
 	def __init__(self, tv: Treeview):
-		self._keys = ()
+		self._keys = {}  # справочник - средство получения уникальных ключей
 		self._cols = {}
 		self._heads = {}
-		self.items = None
+		self.items = []
 		self.tv = tv
 		self.selected: TreeViewItem = None
 
 	def col_key(self, key):
 		key = key or len(self._keys)
-		self._keys += (key,)
-		# self._keys = tuple(set(self._keys))   TODO: Надо бы создавать только уникальные ключи
-		return key
+		self._keys[key] = key
+		r = tuple(self._keys.keys())
+		return r
 
 	def add_col(self, name, title='', image=None, w=200, stretch=False, command=None, anch=W, min_w=10):
 		key = self.col_key(name)
@@ -118,7 +114,7 @@ class TVHelper:
 
 	def init_tv(self, displaycolumns='#all', height=None, selectmode='browse'):
 		tv = self.tv
-		names = tuple(self._keys)
+		names = tuple(self._keys.keys())
 		cc = self._cols
 		hh = self._heads
 
@@ -158,23 +154,50 @@ class TVHelper:
 			to_del = self.tv.get_children()
 			print('clear()', 2, to_del)
 
+		self.items = None
 		if to_del:
 			self.tv.delete(*to_del)
 
-	def fill_tv(self, items: list):
-		self.items = items
+	def items_add(self, tvi: TreeViewItem, set_selected: bool, parent_iid=''):
+		""" добавление в elf.items + выделение в tv"""
+		if tvi:
+			self.items.append(tvi)
+			if not tvi.iid:
+				tvi.insert_self(self.tv, parent_iid)
+			else:
+				for i in tvi.childItems:
+					self.items_add(i, set_selected, tvi.iid)
+
+			if set_selected:
+				self.selected = tvi
+				self.select(tvi.iid)
+
+	def items_set(self, items: tuple):
+		""" утановка elf.items + замена значений tv """
+		self.clear()
+		self.items = list(items)
 		for i in items:
-			i.insert(self.tv)
+			self.items_add(i, False)
+
+	def _find_recusive(self, iid: str, src_items: list) -> TreeViewItem:
+		if src_items:
+			for i in src_items:
+				if i.iid == iid:
+					self.selected = i
+					return i
+				self.selected = self._find_recusive(iid, i.childItems)
+				if self.selected: break # return self.selected
+		return self.selected
 
 	def find_item(self, Id: str):
-		# print(Id)
-		if self.items and Id:
-			# self.selected = next(i for i in self.items if i.iid == Id)
-			self.selected = next((i for i in self.items if i.find(Id)), None)
-		else:
-			self.selected = None
-		print('find_item() -> ', self.selected)
-		return self.selected
+		self.selected = None
+		if Id:
+			return self._find_recusive(Id, self.items)
+
+	def select(self, iid: str):
+		""" выделение в tv"""
+		if iid:
+			self.tv.selection('set', (iid,))
 
 	# оббаботчики событий Treeview
 
