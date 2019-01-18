@@ -44,6 +44,8 @@ class Task(_model):
 	# __slots__ = ('id', 'date', 'title', 'source', 'description', 'items', 'time')
 	# __slots__ = ('date', 'title', 'source', 'description', 'items', 'time')
 
+	time: timedelta = property(lambda self: timedelta(0, sum((i.time_seconds for i in self.items), 0)//1))
+
 	def __init__(self, *args, **kw):
 		super(Task, self).__init__()
 		self.source = ''
@@ -65,7 +67,7 @@ class Task(_model):
 
 class TaskItem(_model):
 	# __slots__ = ('id', 'parentId', 'date', 'title', 'solution', 'time')
-	time: timedelta = property(lambda self: timedelta(0, self.time_seconds or 0), lambda self, value: setattr(self, 'time_seconds', (value and value.total_seconds() or 0)))
+	time: timedelta = property(lambda self: timedelta(0, self.time_seconds or 0), lambda self, value: setattr(self, 'time_seconds', (value and value.total_seconds() // 1)))
 
 	def __init__(self, parent: Task):
 		super(TaskItem, self).__init__()

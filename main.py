@@ -102,7 +102,8 @@ class Main(Tk):
 		t = self.tvh.selected
 		if t and isinstance(t.item, TaskItem):
 			delta = Dialog_Timer.show(self, t.item)
-			t.item.time += delta
-			taskController.update(t.item.task)
+			t.item.time = trim(t.item.time + delta)
+			t.update() # обнонить UI
+			taskController.update(t.item.task)# обнонить базу
 		else:
 			self.bell()

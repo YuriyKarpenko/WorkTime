@@ -41,10 +41,12 @@ def from_taskItem(v: TaskItem, getText=None, getValues=None):
 
 
 def from_task(v: Task):
-	r = tkh.TreeViewItem(v, None, lambda i: i.title, lambda i: (i.date, i.description, i.title))
+	r = tkh.TreeViewItem(v, None, lambda i: i.title, lambda i: (i.date, i.description, i.time))
 	r.childItems = tuple(from_taskItem(i, lambda i: i.title, lambda i: (i.date, i.solution, i.time)) for i in v.items)
 	return r
 
+def trim(td: timedelta) -> timedelta:
+	return timedelta(td.days, td.seconds // 1)
 
 class WButtoms(Frame):
 	def __init__(self, master: Toplevel, onOk, onCancel=None):
@@ -248,23 +250,41 @@ class Dialog_Task(sd.Dialog):
 
 class Dialog_Timer(sd.Dialog):
 	_task: TaskItem
-	_time: timedelta
 	_time_start: datetime
-	_time_label: Label
+	_time_label: StringVar
 
 	def __init__(self, master, task: TaskItem):
 		self._task = task
-		self._time = task.time
-		super(Dialog_Timer, self).__init__(master)
+		super(Dialog_Timer, self).__init__(master, task.title)
 
 	def body(self, master):
-		self._time_label = Label(master)
+		Label(master, text=self._task.solution).pack()
+		Label(master, text='last: %s ' % (trim(self._task.time)) ).pack()
+		self._time_label = StringVar(master)
+		Label(master, textvariable=self._time_label).pack()
+		self.time()
 
-	def apply(self):
-		self._task.time = self._time
+	def buttonbox(self):
+		box = Frame(self)
+
+		w = Button(box, text="OK", width=10, command=self.ok, default=ACTIVE)
+		w.pack(side=BOTTOM, padx=5, pady=5)
+		# w = Button(box, text="Cancel", width=10, command=self.cancel)
+		# w.pack(side=LEFT, padx=5, pady=5)
+
+		self.bind("<Return>", self.ok)
+		# self.bind("<Escape>", self.cancel)
+
+		box.pack()
+
+	def time(self):
+		t = datetime.now() - self._time_start
+		self._time_label.set(str(trim(t)))
+		self.after(1000, func=self.time)
 
 	@staticmethod
 	def show(master: Widget, task: TaskItem) -> timedelta:
 		__class__._time_start = datetime.now()
 		Dialog_Timer(master, task)
-		return datetime.now() - __class__._time_start
+		return trim(datetime.now() - __class__._time_start)
+
