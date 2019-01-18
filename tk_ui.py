@@ -1,10 +1,11 @@
-from datetime import datetime, timedelta
+# from datetime import datetime, timedelta
 from os import path
 from tkinter import *
 from tkinter import filedialog as fd
 import tkinter.ttk as ttk
 import tk_helpers as tkh
-from models import date_fromisoformat, Task, TaskItem
+from models import Task, TaskItem
+from utils import *  # date, date_fromisoformat, trim
 from controllers import optionController
 import tkinter.simpledialog as sd
 
@@ -45,8 +46,6 @@ def from_task(v: Task):
 	r.childItems = tuple(from_taskItem(i, lambda i: i.title, lambda i: (i.date, i.solution, i.time)) for i in v.items)
 	return r
 
-def trim(td: timedelta) -> timedelta:
-	return timedelta(td.days, td.seconds // 1)
 
 class WButtoms(Frame):
 	def __init__(self, master: Toplevel, onOk, onCancel=None):
@@ -223,15 +222,15 @@ class Dialog_Task(sd.Dialog):
 
 	def act_add_item(self):
 		""" добавление решения в задачу """
-		v = TaskItem(self.task) # создать щиъект
-		tvi = from_taskItem(v) # обвернуть его
+		v = TaskItem(self.task)  # создать щиъект
+		tvi = from_taskItem(v)  # обвернуть его
 
-		self.task.items.append(v) # добавить в данные
-		self.items_task_tvh.items_add(tvi, True) # добавить в UI
+		self.task.items.append(v)  # добавить в данные
+		self.items_task_tvh.items_add(tvi, True)  # добавить в UI
 
-		# TODO: надо выделять новую запись в списке
-		# self.items_task_tvh.select(tvi.iid)
-		# self.act_select_item(tvi)
+	# TODO: надо выделять новую запись в списке
+	# self.items_task_tvh.select(tvi.iid)
+	# self.act_select_item(tvi)
 
 	def act_save_item(self):
 		""" заполнение данных решения из полей формы"""
@@ -259,7 +258,7 @@ class Dialog_Timer(sd.Dialog):
 
 	def body(self, master):
 		Label(master, text=self._task.solution).pack()
-		Label(master, text='last: %s ' % (trim(self._task.time)) ).pack()
+		Label(master, text='last: %s ' % (trim(self._task.time))).pack()
 		self._time_label = StringVar(master)
 		Label(master, textvariable=self._time_label).pack()
 		self.time()
@@ -287,4 +286,3 @@ class Dialog_Timer(sd.Dialog):
 		__class__._time_start = datetime.now()
 		Dialog_Timer(master, task)
 		return trim(datetime.now() - __class__._time_start)
-

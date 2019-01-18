@@ -47,7 +47,7 @@ class TreeViewItem:
 	def update(self):
 		self.tv.item(self.iid, text=self.text, values=self.values)
 
-	def __repr__(self): return '%s: [%i], %s' % (self.iid, len(self.childItems) if self.childItems else 0, str(self.item) )
+	def __repr__(self): return '%s: [%i], %s' % (self.iid, len(self.childItems) if self.childItems else 0, str(self.item))
 
 
 class TVHelper:
@@ -186,7 +186,7 @@ class TVHelper:
 					self.selected = i
 					return i
 				self.selected = self._find_recusive(iid, i.childItems)
-				if self.selected: break # return self.selected
+				if self.selected: break  # return self.selected
 		return self.selected
 
 	def find_item(self, Id: str):

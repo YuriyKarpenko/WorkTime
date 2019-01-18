@@ -5,7 +5,7 @@
 from tk_helpers import *
 import tkinter.ttk as ttk
 from controllers import *
-from ui import *  # Dialog_Option, Dialog_Task, Dialog_Timer
+from tk_ui import *  # Dialog_Option, Dialog_Task, Dialog_Timer
 
 
 class Main(Tk):

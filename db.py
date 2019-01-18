@@ -126,7 +126,10 @@ class _Repo(object):
 	# self.query.options(orm.joinedload())
 
 	def get(self, Id):
-		return self.query.filter(self._type.id == Id).one()
+		try:
+			return self.query.filter(self._type.id == Id).one()
+		except:
+			return None
 
 	def get_list(self) -> tuple:
 		r1 = tuple(self.query.all())
