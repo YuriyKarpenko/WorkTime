@@ -1,7 +1,6 @@
-from db import Db, _Repo
+from db.db import Db, IRepo
 import json
-# from utils import date_fromisoformat
-from models import Optiopns, Task
+from core.models import Optiopns, Task
 
 
 class OptionController:
@@ -54,7 +53,7 @@ optionController = OptionController()
 
 
 class _DbDbController:
-	def __init__(self, repo: _Repo): self._repo = repo
+	def __init__(self, repo: IRepo): self._repo = repo
 
 	def refresh(self, entity): return self._repo.db.refresh(entity)
 

@@ -18,14 +18,14 @@ class Optiopns:
 		return {'db_path': self.db_path, "sources": self.sources}
 
 
-class _model(object):
+class IModel(object):
 	def __init__(self):
 		self.id: int = None
 		self.date = date.today()
 		self.title = ''
 
 
-class Task(_model):
+class Task(IModel):
 	# __slots__ = ('id', 'date', 'title', 'source', 'description', 'items', 'time')
 	# __slots__ = ('date', 'title', 'source', 'description', 'items', 'time')
 
@@ -41,7 +41,7 @@ class Task(_model):
 		return "<%s(%i, %s, '%s', '%s', '%s', %i)>" % (self.__class__.__name__, self.id or 0, self.date, self.title, self.source, self.description, len(self.items))
 
 
-class TaskItem(_model):
+class TaskItem(IModel):
 	# __slots__ = ('id', 'parentId', 'date', 'title', 'solution', 'time')
 	time: timedelta = property(lambda self: timedelta(0, self.time_seconds or 0), lambda self, value: setattr(self, 'time_seconds', (value and value.total_seconds() // 1)))
 

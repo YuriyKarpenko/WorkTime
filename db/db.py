@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from subprocess import call
-from models import _model, Task, TaskItem
+from core.models import IModel, Task, TaskItem
 
 try:
 	# sudo pip3 install SQLAlchemy
@@ -27,11 +27,11 @@ class _Repo3:
 
 	def get_list(self) -> tuple: return self._using_db(self._get_list)
 
-	def insert(self, entity: _model):
+	def insert(self, entity: IModel):
 		if not entity.id:
 			return self._using_db(lambda db: self._insert(db, entity), True)
 
-	def update(self, entity: _model): return self._using_db(lambda db: self._update(db, entity), True)
+	def update(self, entity: IModel): return self._using_db(lambda db: self._update(db, entity), True)
 
 	#####################################################
 
@@ -49,9 +49,9 @@ class _Repo3:
 
 	def _get_list(self, c: s3.Cursor) -> tuple: pass
 
-	def _insert(self, c: s3.Cursor, entity: _model): pass
+	def _insert(self, c: s3.Cursor, entity: IModel): pass
 
-	def _update(self, c: s3.Cursor, entity: _model): pass
+	def _update(self, c: s3.Cursor, entity: IModel): pass
 
 
 class RepoTask3(_Repo3):
@@ -114,7 +114,7 @@ class Db3:
 #################################################################################################
 
 
-class _Repo(object):
+class IRepo(object):
 	__abstract__ = True
 
 	def __init__(self, session: orm.Session):
@@ -147,14 +147,14 @@ class _Repo(object):
 	def _query(self, session: orm.Session): pass
 
 
-class RepoTask(_Repo):
+class RepoTask(IRepo):
 	def _class(self): return Task
 
 	def _query(self, session: orm.Session):
 		return session.query(Task).options(orm.joinedload('items'))
 
 
-class RepoTaskItem(_Repo):
+class RepoTaskItem(IRepo):
 	def _class(self): return TaskItem
 
 

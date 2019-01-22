@@ -1,13 +1,14 @@
 # from datetime import datetime, timedelta
 from os import path
-from tkinter import *
-from tkinter import filedialog as fd
-import tkinter.ttk as ttk
-import tk_helpers as tkh
-from models import Task, TaskItem
-from utils import *  # date, date_fromisoformat, trim
-from controllers import optionController
-import tkinter.simpledialog as sd
+from tkinter.constants import *
+from tkinter import filedialog as fd, simpledialog as sd, ttk, StringVar
+from tkinter import Tk, Button, Menu, Text, Toplevel, Widget
+from tkinter.ttk import Frame, Label
+
+from ui import tk_helpers as tkh
+from core.models import Task, TaskItem
+from core.utils import datetime, timedelta, date_fromisoformat, trim
+from core.controllers import optionController, taskController
 
 
 def button(master, title, command, fg='black', side=LEFT, pad=5, w=10, **kw):
@@ -24,8 +25,10 @@ def button(master, title, command, fg='black', side=LEFT, pad=5, w=10, **kw):
 	:return:
 	"""
 	w = max(len(title), w)
-	d = {'text': title, 'command': command, 'width': w, 'bg': 'lightgray', 'activebackground': '#888', 'activeforeground': fg}
-	b = Button(master, {**d, **kw})
+	d = {'master': master, 'text': title, 'command': command, 'width': w}
+	if Button.__module__ == 'tkinter':
+		d = {**d, 'bg': 'lightgray', 'activebackground': '#888', 'activeforeground': fg, }
+	b = Button(**{**d, **kw})
 	b.pack(padx=pad, pady=pad, side=side)
 	return b
 
@@ -86,7 +89,7 @@ class Dialog_Option(sd.Dialog):
 
 		r = 1
 		grid(Label(body, text='Файл базы:'), r, 0)
-		f2 = grid(Frame(body, bd=1, width=2), r, 1)
+		f2 = grid(Frame(body, width=2), r, 1)
 		Button(f2, text='...', command=self.act_open_file).pack(side=RIGHT)
 		ttk.Entry(f2, textvariable=self.items_data[0]).pack(expand=True, fill=BOTH, side=LEFT)
 		r += 1
@@ -145,7 +148,6 @@ class Dialog_Task(sd.Dialog):
 		grid(ttk.Entry(f, textvariable=self.items_task[1]), r, 1)
 		r += 1
 		grid(Label(f, text='Источник:'), r, 0)
-		# TODO: Combobox стрвнно растягивается - за окно ((
 		grid(ttk.Combobox(f, values=optionController.get().sources, textvariable=self.items_task[2]), r, 1, padx=5, pady=5)
 		r += 1
 		grid(Label(f, text='Описание:'), r, 0)
@@ -195,7 +197,7 @@ class Dialog_Task(sd.Dialog):
 			self.items_task[1].set(v.title)
 			self.items_task[2].set(v.source)
 			self.items_task[3].set(v.description)
-			tvi = list(from_taskItem(i) for i in v.items)
+			tvi = tuple(from_taskItem(i) for i in v.items)
 			self.items_task_tvh.items_set(tvi)
 
 	def validate(self):
@@ -226,11 +228,7 @@ class Dialog_Task(sd.Dialog):
 		tvi = from_taskItem(v)  # обвернуть его
 
 		self.task.items.append(v)  # добавить в данные
-		self.items_task_tvh.items_add(tvi, True)  # добавить в UI
-
-	# TODO: надо выделять новую запись в списке
-	# self.items_task_tvh.select(tvi.iid)
-	# self.act_select_item(tvi)
+		self.items_task_tvh.items_add(tvi, True)  # добавить в UI + выделить добавленную запись
 
 	def act_save_item(self):
 		""" заполнение данных решения из полей формы"""
@@ -286,3 +284,113 @@ class Dialog_Timer(sd.Dialog):
 		__class__._time_start = datetime.now()
 		Dialog_Timer(master, task)
 		return trim(datetime.now() - __class__._time_start)
+
+
+class Main(Frame):
+	# _colOptions = tuple({'width':200} * len(_columns))
+	w_tree = None
+	actions = {}
+	tvh: tkh.TVHelper = None
+	btn_time: Button
+
+	def __init__(self, master):
+		super(Main, self).__init__(master)
+		# self.tk.eval('package require Tix')
+		self.pack()
+
+		self._init_menu()
+		self._init_tree()
+		self._init_data()
+
+	def _init_menu(self):
+		m = Menu()
+		self.master.config(menu=m)
+
+		m.add_command(label='Настройки', command=self.act_options)
+		m.add_separator()
+
+		m_task = Menu(m, tearoff=0)
+		m_task.add_command(label='Создать', command=self.act_task_new)
+		m_task.add_command(label='Изменить', command=self.act_task_edit)
+		m.add_cascade(label='Задача', menu=m_task)
+		m.add_separator()
+
+		# TODO: не получается правильно создать кнопку меню
+		# self.btn_time = Checkbutton(m, label='Start', command=self.timer)
+		# m.add(self.btn_time)
+		m.add_command(label='Start', command=self.timer)
+
+	def _init_tree(self):
+		""" https://docs.python.org/3/library/tkinter.ttk.html https://knowpapa.com/ttk-treeview/
+		"""
+		self.w_tree = tv = ttk.Treeview(self)
+		tv.pack(fill=BOTH)
+		self.tvh = tvh = tkh.TVHelper(tv)
+		_columns = ('date', 'title', 'descr', 'time')
+		tvh.add_col(_columns[0], 'Дата', None, 60)
+		# tvh.add_col(_columns[1], 'Задача', None, w=100)
+		tvh.add_col(_columns[2], 'Описание', w=300, stretch=True)
+		tvh.add_col(_columns[3], 'Время', None, 60)
+		tvh.init_tv()
+
+	def _init_data(self):
+		self.tvh.clear()
+		data = taskController.get_list()
+		tvi = tuple(from_task(d) for d in data)
+		self.tvh.items_set(tvi)
+
+	def act_options(self):
+		Dialog_Option.show(self)
+
+	def act_task_new(self):
+		self.act_task(Task())
+
+	def act_task_edit(self):
+		t = self.tvh.selected
+		while t and isinstance(t.item, TaskItem):
+			t = t.parent
+
+		if t:
+			self.act_task(t.item)
+		else:
+			self.bell()
+
+	def act_task(self, t: Task):
+		t = taskController.get(t.id) or t
+		v = Dialog_Task.show(self, t)
+		if v:
+			if v.id:
+				taskController.update(v)
+			else:
+				taskController.insert(v)
+		else:
+			if t.id:
+				taskController.refresh(t)
+		self._init_data()
+
+	def timer(self):
+		t = self.tvh.selected
+		if t and isinstance(t.item, TaskItem):
+			delta = Dialog_Timer.show(self, t.item)
+			t.item.time = trim(t.item.time + delta)
+			t.update()  # обнонить UI
+			taskController.update(t.item.task)  # обнонить базу
+		else:
+			self.bell()
+
+
+class App:
+	def __init__(self):
+		self.tk = Tk()
+		self.tk.title('Время работы')
+		self.main = Main(self.tk)
+		self._init_styles()
+
+	@staticmethod
+	def _init_styles():
+		s = ttk.Style()
+		s.configure('TCombobox', padding=0)
+
+	def run(self):
+		self.tk.mainloop()
+

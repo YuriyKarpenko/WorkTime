@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 # encoding: utf-8
 
-from main import *
 
+if __name__ == '__main__':
+	import ui.tk_ui as ui
 
-root = Main()
-root.run()
+	app = ui.App()
+	app.run()
