@@ -1,4 +1,4 @@
-from db.db import Db, IRepo
+from db.db import IDb, IRepo
 import json
 from core.models import Optiopns, Task
 
@@ -55,21 +55,22 @@ optionController = OptionController()
 class _DbDbController:
 	def __init__(self, repo: IRepo): self._repo = repo
 
-	def refresh(self, entity): return self._repo.db.refresh(entity)
+	def refresh(self, entity): return self._repo.refresh(entity)
 
 
 class TaskController(_DbDbController):
 	# __slots__ = ('current')
-	db: Db
+	db: IDb
 
 	def __init__(self):
 		self.current: Task = None
 		self._filename = optionController.get() and optionController.get().db_path or 'tasks.json'
-		self.db = Db(self._filename)
+		import db.db_native as db
+		self.db = db.Db(self._filename)
 		super(TaskController, self).__init__(self.db.repoTask)
 
 	def get(self, Id):
-		if id:
+		if Id:
 			self.current = self._repo.get(Id)
 			return self.current
 		return None
