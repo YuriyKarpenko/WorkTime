@@ -50,33 +50,39 @@ def from_task(v: Task):
 	return r
 
 
-class WButtoms(Frame):
-	def __init__(self, master: Toplevel, onOk, onCancel=None):
-		""" отображает нижние кнопки в диалоговом окне
+class _DialogBase(sd.Dialog):
 
-		:param master: диалоговое окно
-		:param onOk: метод нажатия кнопки (если вернет , то вызывается метод act_cancel() для закрытия окна
-		:param onCancel: метод нажатия кнопки "Отмена", по умолчанию просто уничтожает диалоговое окно
-		"""
-		super(WButtoms, self).__init__(master)
-		self.onCancel = onCancel
-		self.onOk = onOk
-		self.btnOk = button(self, 'Ok', self.act_ok, 'green', RIGHT)
-		self.btnCancel = button(self, 'Cancel', self.act_cancel, 'red', RIGHT)
-		self.pack(side='bottom', fill='x', expand=0)
+	def buttonbox(self):
+		box = Frame(self)
 
-	def act_cancel(self):
-		if self.onCancel:
-			self.onCancel()
-		else:
-			self.master.destroy()
+		# Button(box, text="OK", width=10, command=self.ok, default=ACTIVE).pack(side=LEFT, padx=5, pady=5)
+		# Button(box, text="Cancel", width=10, command=self.cancel).pack(side=LEFT, padx=5, pady=5)
+		button(box, 'Ok', self.ok, 'green', default=ACTIVE)
+		button(box, 'Cancel', self.cancel, 'red')
 
-	def act_ok(self):
-		r = self.onOk and self.onOk()
-		return r and self.act_cancel()
+		self.bind("<Return>", self.ok)
+		self.bind("<Escape>", self.cancel)
+
+		box.pack()
+
+	def ok(self, event=None):
+		if event:
+			if isinstance(event.widget, Text): return
+		# if not self.validate():
+		#     self.initial_focus.focus_set() # put focus back
+		#     return
+
+		# self.withdraw()
+		# self.update_idletasks()
+
+		# try:
+		#     self.apply()
+		# finally:
+		#     self.cancel()
+		sd.Dialog.ok(self, event)
 
 
-class Dialog_Option(sd.Dialog):
+class Dialog_Option(_DialogBase):
 	items_data = []
 	sources: Text = None
 	res = None
@@ -122,7 +128,7 @@ class Dialog_Option(sd.Dialog):
 		return __class__.res
 
 
-class Dialog_Task(sd.Dialog):
+class Dialog_Task(_DialogBase):
 	modal_result = None
 	task: Task
 	items_task: list
@@ -264,10 +270,8 @@ class Dialog_Timer(sd.Dialog):
 	def buttonbox(self):
 		box = Frame(self)
 
-		w = Button(box, text="OK", width=10, command=self.ok, default=ACTIVE)
-		w.pack(side=BOTTOM, padx=5, pady=5)
-		# w = Button(box, text="Cancel", width=10, command=self.cancel)
-		# w.pack(side=LEFT, padx=5, pady=5)
+		button(box, "OK", self.ok, 'green', default=ACTIVE)
+		# Button(box, text="Cancel", width=10, command=self.cancel).pack(side=LEFT, padx=5, pady=5)
 
 		self.bind("<Return>", self.ok)
 		# self.bind("<Escape>", self.cancel)
