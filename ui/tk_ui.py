@@ -154,7 +154,7 @@ class Dialog_Task(_DialogBase):
 		grid(ttk.Entry(f, textvariable=self.items_task[1]), r, 1)
 		r += 1
 		grid(Label(f, text='Источник:'), r, 0)
-		grid(ttk.Combobox(f, values=optionController.get().sources, textvariable=self.items_task[2]), r, 1, padx=5, pady=5)
+		grid(ttk.Combobox(f, values=optionController.get().sources, textvariable=self.items_task[2]), r, 1, padx=5, pady=5).state(['readonly'])
 		r += 1
 		grid(Label(f, text='Описание:'), r, 0)
 		grid(ttk.Entry(f, textvariable=self.items_task[3]), r, 1)
@@ -317,6 +317,7 @@ class Main(Frame):
 		m_task.add_command(label='Создать', command=self.act_task_new)
 		m_task.add_command(label='Изменить', command=self.act_task_edit)
 		m.add_cascade(label='Задача', menu=m_task)
+		self.menu_task = m_task
 		m.add_separator()
 
 		# TODO: не получается правильно создать кнопку меню
@@ -336,12 +337,20 @@ class Main(Frame):
 		tvh.add_col(_columns[2], 'Описание', w=300, stretch=True)
 		tvh.add_col(_columns[3], 'Время', None, 60)
 		tvh.init_tv()
+		tv.bind("<Button-3>", self.popup)
 
 	def _init_data(self):
 		self.tvh.clear()
 		data = taskController.get_list()
 		tvi = tuple(from_task(d) for d in data)
 		self.tvh.items_set(tvi)
+
+	def popup(self, e):
+		task_id = self.tvh.tv.identify_row(e.y)
+		if task_id:
+			self.tvh.select(task_id)
+			tvi = self.tvh.find_item(task_id)
+			self.menu_task.post(e.x_root, e.y_root)
 
 	def act_options(self):
 		Dialog_Option.show(self)
