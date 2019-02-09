@@ -35,7 +35,7 @@ class Task(IModel):
 		super(Task, self).__init__()
 		self.source = ''
 		self.description = ''
-		self.items = [TaskItem(self)]
+		self.items = [TaskItem(self, title='Погружение в задачу')]
 
 	def __repr__(self):
 		return "<%s(%i, %s, '%s', '%s', '%s', %i)>" % (self.__class__.__name__, self.id or 0, self.date, self.title, self.source, self.description, len(self.items))

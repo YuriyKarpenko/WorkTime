@@ -10,6 +10,7 @@ from core.models import Task, TaskItem
 from core.utils import datetime, timedelta, date_fromisoformat, trim
 from core.controllers import optionController, taskController
 
+import xlwt
 
 def button(master, title, command, fg='black', side=LEFT, pad=5, w=10, **kw):
 	""" https://younglinux.info/tkinter2/widget.php
@@ -324,6 +325,7 @@ class Main(Frame):
 		# self.btn_time = Checkbutton(m, label='Start', command=self.timer)
 		# m.add(self.btn_time)
 		m.add_command(label='Start', command=self.timer)
+		m.add_command(label='Export', command=self.export)
 
 	def _init_tree(self):
 		""" https://docs.python.org/3/library/tkinter.ttk.html https://knowpapa.com/ttk-treeview/
@@ -390,6 +392,38 @@ class Main(Frame):
 			taskController.update(t.item.task)  # обнонить базу
 		else:
 			self.bell()
+
+	def export(self):
+		wb = xlwt.Workbook(encoding='utf-8')
+		ws = wb.add_sheet('work')
+		style_bold = xlwt.XFStyle()
+		style_bold.font.bold = True
+
+		row = 0
+		task_fields = ['date', 'title', 'source', 'description', 'time (seconds)', 'time subtotal', ]
+		for col_num in range(len(task_fields)):
+			ws.write(row, col_num, task_fields[col_num], style_bold)
+		total_sec = 0
+		data = taskController.get_list()
+		for task in data:
+			row += 1
+			ws.write(row, 0, task.date, style_bold)
+			ws.write(row, 1, task.title, style_bold)
+			ws.write(row, 2, task.source, style_bold)
+			ws.write(row, 3, task.description, style_bold)
+			ws.write(row, 5, str(task.time), style_bold)
+			for item in task.items:
+				row += 1
+				ws.write(row, 0, item.date)
+				ws.write(row, 1, item.title)
+				# ws.write(row, 2, item.date)
+				ws.write(row, 3, item.solution)
+				ws.write(row, 4, item.time_seconds)
+				total_sec += item.time_seconds
+		row += 1
+		ws.write(row, 1, 'Total', style_bold)
+		ws.write(row, 4, total_sec, style_bold)
+		wb.save('work.xlsx')
 
 
 class App:
