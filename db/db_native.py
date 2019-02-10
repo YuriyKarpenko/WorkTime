@@ -4,6 +4,7 @@ from core.models import IModel, Task, TaskItem
 from db.db import IDb, IRepo
 
 
+def screening(s: str) -> str: return s.replace('"', "'")
 
 class _Repo(IRepo):
 	__abstract__ = True
@@ -56,10 +57,10 @@ class RepoTask(_Repo):
 	_select_base = 'SELECT id, date, title, source, description FROM [task] '
 
 	def _insert_sql(self, v):
-		return 'INSERT INTO [task] (date, title, source, description) VALUES("%s", "%s", "%s", "%s")' % (v.date, v.title, v.source, v.description)
+		return 'INSERT INTO [task] (date, title, source, description) VALUES("%s", "%s", "%s", "%s")' % (v.date, screening(v.title), screening(v.source), screening(v.description))
 
 	def _update_sql(self, v):
-		return 'UPDATE [task] SET date = "%s", title = "%s", source = "%s", description = "%s" WHERE id = %i' % (v.date, v.title, v.source, v.description, v.id)
+		return 'UPDATE [task] SET date = "%s", title = "%s", source = "%s", description = "%s" WHERE id = %i' % (v.date, screening(v.title), screening(v.source), screening(v.description), v.id)
 
 	def insert(self, entity: Task):
 		if entity:
@@ -108,10 +109,10 @@ class RepoTaskItem(_Repo):
 			return None
 
 	def _insert_sql(self, v: TaskItem) -> str:
-		return 'INSERT INTO [task_item] (task_id, date, title, solution, time_seconds) VALUES(%i, "%s", "%s", "%s", %i)' % (v.task_id, v.date, v.title, v.solution, v.time_seconds)
+		return 'INSERT INTO [task_item] (task_id, date, title, solution, time_seconds) VALUES(%i, "%s", "%s", "%s", %i)' % (v.task_id, v.date, screening(v.title), screening(v.solution), v.time_seconds)
 
 	def _update_sql(self, v: TaskItem) -> str:
-		return 'UPDATE [task_item] SET task_id = %i, date = "%s", title = "%s", solution = "%s", time_seconds = %i WHERE id = %i' % (v.task_id, v.date, v.title, v.solution, v.time_seconds, v.id)
+		return 'UPDATE [task_item] SET task_id = %i, date = "%s", title = "%s", solution = "%s", time_seconds = %i WHERE id = %i' % (v.task_id, v.date, screening(v.title), screening(v.solution), v.time_seconds, v.id)
 
 	def _map(self, t: tuple, task = None) -> Task:
 		r = TaskItem(task)
