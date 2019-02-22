@@ -50,17 +50,16 @@ class RepoTask(_Repo):
 	[id] INTEGER NOT NULL,
 	[date] DATE NOT NULL,
 	[title] VARCHAR,
-	[source] VARCHAR,
 	[description] VARCHAR,
 	PRIMARY KEY ([id])
 	)"""
-	_select_base = 'SELECT id, date, title, source, description FROM [task] '
+	_select_base = 'SELECT id, date, title, description FROM [task] '
 
 	def _insert_sql(self, v):
-		return 'INSERT INTO [task] (date, title, source, description) VALUES("%s", "%s", "%s", "%s")' % (v.date, screening(v.title), screening(v.source), screening(v.description))
+		return 'INSERT INTO [task] (date, title, description) VALUES("%s", "%s", "%s")' % (v.date, screening(v.title), screening(v.description))
 
 	def _update_sql(self, v):
-		return 'UPDATE [task] SET date = "%s", title = "%s", source = "%s", description = "%s" WHERE id = %i' % (v.date, screening(v.title), screening(v.source), screening(v.description), v.id)
+		return 'UPDATE [task] SET date = "%s", title = "%s", description = "%s" WHERE id = %i' % (v.date, screening(v.title), screening(v.description), v.id)
 
 	def insert(self, entity: Task):
 		if entity:
@@ -96,10 +95,11 @@ class RepoTaskItem(_Repo):
 	[task_id] INTEGER NOT NULL REFERENCES [task](id),
 	[date] DATE NOT NULL,
 	[title] VARCHAR,
+	[source] VARCHAR,
 	[solution] VARCHAR,
 	[time_seconds] INTEGER
 	)"""
-	_select_base = 'SELECT id, task_id, date, title, solution, time_seconds FROM [task_item] '
+	_select_base = 'SELECT id, task_id, date, title, source, solution, time_seconds FROM [task_item] '
 
 	def get_for_parent(self, task: Task) -> list:
 		if task:
@@ -109,10 +109,10 @@ class RepoTaskItem(_Repo):
 			return None
 
 	def _insert_sql(self, v: TaskItem) -> str:
-		return 'INSERT INTO [task_item] (task_id, date, title, solution, time_seconds) VALUES(%i, "%s", "%s", "%s", %i)' % (v.task_id, v.date, screening(v.title), screening(v.solution), v.time_seconds)
+		return 'INSERT INTO [task_item] (task_id, date, title, source, solution, time_seconds) VALUES(%i, "%s", "%s", "%s", "%s", %i)' % (v.task_id, v.date, screening(v.title), screening(v.source), screening(v.solution), v.time_seconds)
 
 	def _update_sql(self, v: TaskItem) -> str:
-		return 'UPDATE [task_item] SET task_id = %i, date = "%s", title = "%s", solution = "%s", time_seconds = %i WHERE id = %i' % (v.task_id, v.date, screening(v.title), screening(v.solution), v.time_seconds, v.id)
+		return 'UPDATE [task_item] SET task_id = %i, date = "%s", title = "%s", source = "%s", solution = "%s", time_seconds = %i WHERE id = %i' % (v.task_id, v.date, screening(v.title), screening(v.source), screening(v.solution), v.time_seconds, v.id)
 
 	def _map(self, t: tuple, task = None) -> Task:
 		r = TaskItem(task)

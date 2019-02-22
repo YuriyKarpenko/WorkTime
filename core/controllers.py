@@ -65,6 +65,8 @@ class TaskController(_DbDbController):
 	def __init__(self):
 		self.current: Task = None
 		self._filename = optionController.get() and optionController.get().db_path or 'tasks.json'
+		# TODO: create backup
+
 		import db.db_native as db
 		self.db = db.Db(self._filename)
 		super(TaskController, self).__init__(self.db.repoTask)

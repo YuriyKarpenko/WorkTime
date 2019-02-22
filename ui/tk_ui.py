@@ -144,8 +144,8 @@ class Dialog_Task(_DialogBase):
 
 	def body(self, f):
 		# https://docs.python.org/3/library/tkinter.html
-		self.items_task = [StringVar(self), StringVar(self), StringVar(self), StringVar(self)]
-		self.items_taskItem = [StringVar(self), StringVar(self)]
+		self.items_task = [StringVar(self), StringVar(self), StringVar(self)]
+		self.items_taskItem = [StringVar(self), StringVar(self), StringVar(self)]
 
 		r = 1
 		grid(Label(f, text='Дата:'), r, 0)
@@ -154,11 +154,8 @@ class Dialog_Task(_DialogBase):
 		grid(Label(f, text='Задача:'), r, 0)
 		grid(ttk.Entry(f, textvariable=self.items_task[1]), r, 1)
 		r += 1
-		grid(Label(f, text='Источник:'), r, 0)
-		grid(ttk.Combobox(f, values=optionController.get().sources, textvariable=self.items_task[2]), r, 1, padx=5, pady=5).state(['readonly'])
-		r += 1
 		grid(Label(f, text='Описание:'), r, 0)
-		grid(ttk.Entry(f, textvariable=self.items_task[3]), r, 1)
+		grid(ttk.Entry(f, textvariable=self.items_task[2]), r, 1)
 		r += 1
 		# TreeView
 		grid(Label(f, text='Решения:'), r, 0)
@@ -190,6 +187,9 @@ class Dialog_Task(_DialogBase):
 		grid(Label(f, text='Задача:'), r, 0)
 		grid(ttk.Entry(f, textvariable=self.items_taskItem[1]), r, 1)
 		r += 1
+		grid(Label(f, text='Источник:'), r, 0)
+		grid(ttk.Combobox(f, values=optionController.get().sources, textvariable=self.items_taskItem[2]), r, 1, padx=5, pady=5).state(['readonly'])
+		r += 1
 		grid(Label(f, text='Решение:'), r, 0)
 		self.items_taskItem_text = Text(f, height=5, width=40, wrap=WORD)
 		grid(self.items_taskItem_text, r, 1)
@@ -202,8 +202,7 @@ class Dialog_Task(_DialogBase):
 		if v:
 			self.items_task[0].set(v.date)
 			self.items_task[1].set(v.title)
-			self.items_task[2].set(v.source)
-			self.items_task[3].set(v.description)
+			self.items_task[2].set(v.description)
 			tvi = tuple(from_taskItem(i) for i in v.items)
 			self.items_task_tvh.items_set(tvi)
 
@@ -213,8 +212,7 @@ class Dialog_Task(_DialogBase):
 		if v:
 			v.date = date_fromisoformat(self.items_task[0].get())
 			v.title = self.items_task[1].get()
-			v.source = self.items_task[2].get()
-			v.description = self.items_task[3].get()
+			v.description = self.items_task[2].get()
 			self.act_save_item()
 			__class__.modal_result = v
 		return v
@@ -227,11 +225,12 @@ class Dialog_Task(_DialogBase):
 		if ti:
 			self.items_taskItem[0].set(ti.item.date)
 			self.items_taskItem[1].set(ti.item.title)
+			self.items_taskItem[2].set(ti.item.source)
 			self.items_taskItem_text.insert(1.0, ti.item.solution)
 
 	def act_add_item(self):
 		""" добавление решения в задачу """
-		v = TaskItem(self.task)  # создать щиъект
+		v = TaskItem(self.task)  # создать объект
 		tvi = from_taskItem(v)  # обвернуть его
 
 		self.task.items.append(v)  # добавить в данные
@@ -243,6 +242,7 @@ class Dialog_Task(_DialogBase):
 			v = self.items_task_tvh.selected.item
 			v.date = date_fromisoformat(self.items_taskItem[0].get())
 			v.title = self.items_taskItem[1].get()
+			v.source = self.items_taskItem[2].get()
 			v.solution = self.items_taskItem_text.get(1.0, END).rstrip('\n')
 			self.items_task_tvh.selected.update()
 
@@ -301,8 +301,8 @@ class Main(Frame):
 	def __init__(self, master):
 		super(Main, self).__init__(master)
 		# self.tk.eval('package require Tix')
-		self.pack()
-
+		#self.geometry("1024x736+0+0")
+		self.pack(fill=BOTH)
 		self._init_menu()
 		self._init_tree()
 		self._init_data()
@@ -310,7 +310,8 @@ class Main(Frame):
 	def _init_menu(self):
 		m = Menu()
 		self.master.config(menu=m)
-
+		# fn = path.abspath('icons/option.bmp')
+		# icon = PhotoImage(file=fn)
 		m.add_command(label='Настройки', command=self.act_options)
 		m.add_separator()
 
@@ -331,7 +332,7 @@ class Main(Frame):
 		""" https://docs.python.org/3/library/tkinter.ttk.html https://knowpapa.com/ttk-treeview/
 		"""
 		self.w_tree = tv = ttk.Treeview(self)
-		tv.pack(fill=BOTH)
+		tv.pack(anchor=S, fill=BOTH)
 		self.tvh = tvh = tkh.TVHelper(tv)
 		_columns = ('date', 'title', 'descr', 'time')
 		tvh.add_col(_columns[0], 'Дата', None, 60)
@@ -429,6 +430,8 @@ class Main(Frame):
 class App:
 	def __init__(self):
 		self.tk = Tk()
+		# self.tk.resizable(True, True)
+		self.tk.geometry("1024x736+0+0")
 		self.tk.title('Время работы')
 		self.main = Main(self.tk)
 		self._init_styles()

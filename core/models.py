@@ -26,14 +26,12 @@ class IModel(object):
 
 
 class Task(IModel):
-	# __slots__ = ('id', 'date', 'title', 'source', 'description', 'items', 'time')
-	# __slots__ = ('date', 'title', 'source', 'description', 'items', 'time')
+	# __slots__ = ('id', 'date', 'title', 'description', 'items', 'time')
 
 	time: timedelta = property(lambda self: timedelta(0, sum((i.time_seconds for i in self.items), 0) // 1))
 
 	def __init__(self):
 		super(Task, self).__init__()
-		self.source = ''
 		self.description = ''
 		self.items = [TaskItem(self, title='Погружение в задачу')]
 
@@ -42,14 +40,17 @@ class Task(IModel):
 
 
 class TaskItem(IModel):
-	# __slots__ = ('id', 'parentId', 'date', 'title', 'solution', 'time')
+	# __slots__ = ('id', 'parentId', 'date', 'title', 'source', 'solution', 'time')
 	time: timedelta = property(lambda self: timedelta(0, self.time_seconds or 0), lambda self, value: setattr(self, 'time_seconds', (value and value.total_seconds() // 1)))
 
-	def __init__(self, parent: Task):
+	def __init__(self, parent: Task, **kw):
 		super(TaskItem, self).__init__()
+		self.source = ''
 		self.solution = ''
 		self.time_seconds = 0
 		# self.time = datetime.timedelta(0)
+		# for k, v in kw.items():
+		# 	self[k]=v
 
 		self.task_id = parent.id
 		self.task = parent
