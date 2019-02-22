@@ -1,6 +1,9 @@
 from db.db import IDb, IRepo
 import json
+import os
+import shutil
 from core.models import Optiopns, Task
+from datetime import datetime
 
 
 class OptionController:
@@ -66,6 +69,19 @@ class TaskController(_DbDbController):
 		self.current: Task = None
 		self._filename = optionController.get() and optionController.get().db_path or 'tasks.json'
 		# TODO: create backup
+		bak = self._filename + '.bak'
+		c = 0
+		min_date = datetime.now().timestamp()
+		min_name = bak
+		while c < 5 and os.path.exists(bak):
+			d = os.path.getctime(bak)
+			if(min_date > d):
+				min_date = d
+				min_name = bak
+			bak = self._filename + '.bak' + str(c)
+			c += 1
+		if (c >= 5): bak = min_name
+		shutil.copy(self._filename, bak)
 
 		import db.db_native as db
 		self.db = db.Db(self._filename)
