@@ -81,8 +81,7 @@ class RepoTask(_Repo):
 		r.id = t[0]
 		r.date = t[1]
 		r.title = t[2]
-		r.source = t[3]
-		r.description = t[4]
+		r.description = t[3]
 
 		r.items = self.db.repoTaskItem.get_for_parent(r)
 
@@ -120,8 +119,9 @@ class RepoTaskItem(_Repo):
 		r.task_id = t[1]
 		r.date = t[2]
 		r.title = t[3]
-		r.solution = t[4]
-		r.time_seconds = t[5]
+		r.source = t[4]
+		r.solution = t[5]
+		r.time_seconds = t[6]
 		return r
 
 
