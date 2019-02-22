@@ -69,8 +69,8 @@ class TaskController(_DbDbController):
 		self.current: Task = None
 		self._filename = optionController.get() and optionController.get().db_path or 'tasks.json'
 		# TODO: create backup
-		bak = self._filename + '.bak'
 		c = 0
+		bak = self._filename + '.bak' + str(c)
 		min_date = datetime.now().timestamp()
 		min_name = bak
 		while c < 5 and os.path.exists(bak):
@@ -78,8 +78,8 @@ class TaskController(_DbDbController):
 			if(min_date > d):
 				min_date = d
 				min_name = bak
-			bak = self._filename + '.bak' + str(c)
 			c += 1
+			bak = self._filename + '.bak' + str(c)
 		if (c >= 5): bak = min_name
 		shutil.copy(self._filename, bak)
 
