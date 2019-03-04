@@ -75,7 +75,7 @@ class TaskController(_DbDbController):
 			min_date = datetime.now().timestamp()
 			min_name = bak
 			while c < 5 and os.path.exists(bak):
-				d = os.path.getctime(bak)
+				d = os.path.getmtime(bak)
 				if(min_date > d):
 					min_date = d
 					min_name = bak
